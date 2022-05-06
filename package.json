@@ -9,5 +9,8 @@
   },
   "devDependencies": {
     "vite": "^2.9.7"
+  },
+  "dependencies": {
+    "srt-parser-2": "^1.1.7"
   }
 }
