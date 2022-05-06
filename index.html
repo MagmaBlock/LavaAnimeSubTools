@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/mdui/1.0.2/js/mdui.min.js"></script>
+  <link href="https://cdn.bootcdn.net/ajax/libs/mdui/1.0.2/css/mdui.min.css" rel="stylesheet">
+  <script src="https://cdn.bootcdn.net/ajax/libs/clipboard.js/2.0.10/clipboard.min.js"></script>
+  <script type="module" src="/main.js"></script>
+</head>
+
+<body class="mdui-theme-layout-auto mdui-theme-primary-indigo mdui-theme-accent-indigo">
+  <div class="mdui-container">
+    <!-- 标题 -->
+    <div class="mdui-typo">
+      <h1>SRT 转 ASS <small>LavaAnimeSubTools 熔岩动画小工具</small></h1>
+      <span class="mdui-text-color-theme-secondary">目前支持 B 站格式的 SRT 字幕自动拆分合并</span>
+      <div class="mdui-float-right mdui-text-color-theme-secondary">Latest update: 2022-05-06</div>
+    </div>
+
+    <div class="mdui-divider mdui-m-y-2"></div>
+
+    <!-- 设置区 -->
+    <div class="mdui-container-fluid">
+      <div class="mdui-row">
+        <div class="mdui-col-xs-5">
+          <label class="mdui-checkbox">
+            <input type="checkbox" checked disabled /><i class="mdui-checkbox-icon"></i> 为括号包裹行指定样式名 <small
+              class="mdui-text-color-theme-secondary">不填默认设置为 Top</small>
+          </label>
+        </div>
+        <div class="mdui-col-xs-7">
+          <input class="mdui-textfield-input" type="text" placeholder="ASS Style 名称..." id="style" />
+        </div>
+      </div>
+    </div>
+
+    <div class="mdui-divider mdui-m-y-2"></div>
+
+    <!-- 功能区 -->
+    <div class="mdui-container-fluid">
+
+      <div class="mdui-row mdui-m-t-3">
+
+        <div class="mdui-textfield mdui-col-xs-6">
+          <textarea class="mdui-textfield-input" rows="8" placeholder="请粘贴 SRT 字幕内容..." id="srt"></textarea>
+        </div>
+
+        <div class="mdui-textfield mdui-col-xs-6">
+          <textarea class="mdui-textfield-input" rows="8" placeholder="这里将显示生成的 ASS 字幕内容..." id="ass"></textarea>
+        </div>
+
+      </div>
+
+      <div class="mdui-row mdui-m-t-2">
+        <!-- 操作区 -->
+        <div class="mdui-col-xs-4">
+          <!-- 按钮 -->
+          <div class="mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme mdui-fab" id="go">
+            <i class="mdui-icon material-icons">send</i>
+          </div>
+          <div style="display: inline; margin-left: 10px;"></div>
+          <div class="mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme mdui-fab" id="copy" data-clipboard-target="#ass">
+            <i class="mdui-icon material-icons">content_copy</i>
+          </div>
+          <br><br>
+          <a class="mdui-btn mdui-btn-raised mdui-ripple" href="https://zhconvert.org/" target="__blank">打开繁化姬</a>
+        </div>
+        <!-- Console -->
+        <div class="mdui-col-xs-8 mdui-typo">
+          <pre style="height: 150px; overflow-wrap: normal; overflow-y: scroll;" class="mdui-text-color-theme-secondary"
+            id="log"></pre>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
