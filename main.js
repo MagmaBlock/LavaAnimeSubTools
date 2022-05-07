@@ -1,7 +1,13 @@
+// 依赖包
 import srtParser2 from 'srt-parser-2'
+import ClipboardJS from 'clipboard';
 
+// 新建一个解析器
+const parser = new srtParser2();
+// 创建一个复制器实例
 const clipboard = new ClipboardJS('#copy');
 
+// 复制事件处理
 clipboard.on('success', function (e) {
   log('复制成功')
 });
@@ -9,30 +15,24 @@ clipboard.on('error', function (e) {
   log('复制失败')
 });
 
+// 点击转换按钮时的事件处理
 document.getElementById('go').addEventListener('click', () => {
   let srt = document.getElementById('srt').value;
+  let style = document.getElementById('style').value !== '' ? document.getElementById('style').value : 'Top';
   if (srt !== '') {
-    let ass = srtToAss(srt, document.getElementById('style').value);
-    document.getElementById('ass').value = ass;
-  } else {
-    log('请填入 SRT 字幕正文')
-  }
+    let ass = srtToAss(srt, style); // 按照设置处理 SRT
+    document.getElementById('ass').value = ass; // 输出 ASS
+  } else log('请填入 SRT 字幕正文')
 })
 
-function log(log) {
+function log(log) { // 封装一个 Log 函数
   document.getElementById('log').insertAdjacentHTML('afterbegin', log + '<br>')
   console.log(log)
 }
 
-function srtToAss(srt, style) {
-  if (style == '' || style == undefined) {
-    style = 'Top'
-  }
+function srtToAss(srt, style) { // SRT 转 ASS 的函数
 
-  const parser = new srtParser2(); // 新建一个解析器
-  // log(srt);
-
-  let parsedSrt = parser.fromSrt(srt) // 解析srt
+  let parsedSrt = parser.fromSrt(srt) // 解析 srt 为一个对象数组
 
   /*
       第一步解析：把每个srt字幕的时间和内容转为一个新对象插入数组，
@@ -43,28 +43,38 @@ function srtToAss(srt, style) {
       then split the srt line into several lines, and insert the new object into the array (each line has same time)
   */
 
-  let newSubtitleArray1 = new Array();
+  let newSubtitleArray = new Array();
 
   for (let i in parsedSrt) {
+
     if (parsedSrt[i].text.includes("\n")) { // 如果这个srt字幕包含换行符号
       let lines = parsedSrt[i].text.split("\n"); // 拆分srt字幕
-      for (let j in lines) { // 循环每行
+      log(`[拆分多行][${i}] ${JSON.stringify(lines)}`)
+
+      for (let j in lines) { // 循环拆开后的每一行
+        if (lines[j].startsWith('-')) {
+          log(`[拆分多行][${i}][${j}] ${lines[j]} 的开头是 -，移除...`)
+        }
         let newSubtitle = {
           startTime: parsedSrt[i].startTime, // 引用原来的时间
           endTime: parsedSrt[i].endTime,
           text: lines[j], // 被分割的这一行
-          style: 'Default'
+          style: 'Default',
+          comment: false
         };
-        newSubtitleArray1.push(newSubtitle);
+        newSubtitleArray.push(newSubtitle);
       }
-    } else {
+    }
+
+    else { // 不包含换行符的时候
       let thisSrtLine = {
         startTime: parsedSrt[i].startTime,
         endTime: parsedSrt[i].endTime,
         text: parsedSrt[i].text,
-        style: 'Default'
+        style: 'Default',
+        comment: false
       }
-      newSubtitleArray1.push(thisSrtLine);
+      newSubtitleArray.push(thisSrtLine);
     }
   }
 
@@ -74,26 +84,53 @@ function srtToAss(srt, style) {
       避免重复字幕出现。
   */
 
-  for (let i in newSubtitleArray1) { // 父遍历
-    for (let j = 0; j < newSubtitleArray1.length; j++) { // 子遍历
-      if (newSubtitleArray1[j].startTime == newSubtitleArray1[i].endTime && newSubtitleArray1[j].text == newSubtitleArray1[i].text) { // 如果子遍历字幕的开始时间和当前父遍历字幕的结束时间相同，且他们的内容一样，则将他们合并
-        log(`[行 ${i} ==> ${j}] ${newSubtitleArray1[j].text} (${newSubtitleArray1[i].endTime} ==> ${newSubtitleArray1[j].endTime})`);
-        newSubtitleArray1[i].endTime = newSubtitleArray1[j].endTime; // 将子遍历字幕的结束时间赋值给父遍历字幕
-        newSubtitleArray1.splice(j, 1); // 删除子遍历字幕
+  for (let i in newSubtitleArray) { // 父遍历
+    for (let j = 0; j < newSubtitleArray.length; j++) { // 子遍历
+      if (newSubtitleArray[j].startTime == newSubtitleArray[i].endTime && newSubtitleArray[j].text == newSubtitleArray[i].text) { // 如果子遍历字幕的开始时间和当前父遍历字幕的结束时间相同，且他们的内容一样，则将他们合并
+        log(`[合并分裂行][${i} ==> ${j}](${newSubtitleArray[i].endTime} => ${newSubtitleArray[j].endTime}) ${newSubtitleArray[j].text}`);
+        newSubtitleArray[i].endTime = newSubtitleArray[j].endTime; // 将子遍历字幕的结束时间赋值给父遍历字幕
+        newSubtitleArray.splice(j, 1); // 删除子遍历字幕
         j = j - 1; // 子遍历字幕的索引减一
       }
     }
   }
 
-  for (let i in newSubtitleArray1) {
-    if (newSubtitleArray1[i].text.startsWith('(') && newSubtitleArray1[i].text.endsWith(')') || newSubtitleArray1[i].text.startsWith('（') && newSubtitleArray1[i].text.endsWith('）')) {
-      log(`[行 ${i}] ${newSubtitleArray1[i].text} 更换为 ${style} 样式`);
-      newSubtitleArray1[i].style = style;
+  for (let i in newSubtitleArray) {
+    if (newSubtitleArray[i].text.startsWith('(') && newSubtitleArray[i].text.endsWith(')') || newSubtitleArray[i].text.startsWith('（') && newSubtitleArray[i].text.endsWith('）')) {
+      log(`[括号行样式][行 ${i}] ${newSubtitleArray[i].text} 更换为 ${style} 样式`);
+      newSubtitleArray[i].style = style;
     }
   }
 
-  // log(JSON.stringify(newSubtitleArray1));
 
+  /*
+      第二、五步：如果需要，将字幕中出现的多行对话拆开，每个对话一个字幕。
+      (如：“-那个打扮成孔明的人没在啊 -请为双方献上掌声” ==> “那个打扮成孔明的人没在啊” “请为双方献上掌声”，两个字幕)
+  */
+
+  for (let i in newSubtitleArray) {
+    // 如果这行字幕包含了双对话 (用-分割，如果有俩-，那么分割出来的应该是一个空字符和两个对话)
+    let splitThisLine = newSubtitleArray[i].text.split('-');
+    if (splitThisLine.length >= 3 && splitThisLine[0] == '' && splitThisLine[1] != '' && splitThisLine[2] != '') {
+      log(`[单行多重对话][行 ${i}] ${newSubtitleArray[i].text} 可能为多重对话，准备拆分`);
+      splitThisLine.splice(0, 1); // 删除第一个空字符
+      for (let j in splitThisLine) { // 循环拆分出来的每一个对话
+        splitThisLine[j] = splitThisLine[j].trim(); // 去除前后空格
+        log(`[单行多重对话][行 ${i}] 拆分单行(${j}): ${splitThisLine[j]}`);
+        let thisNewSubtitle = {
+          startTime: newSubtitleArray[i].startTime,
+          endTime: newSubtitleArray[i].endTime,
+          text: splitThisLine[j],
+          style: 'Default',
+          comment: false
+        }
+        newSubtitleArray.splice(parseInt(i) + 1, 0, thisNewSubtitle); // 在父遍历字幕的后面插入新的字幕
+        newSubtitleArray[i].comment = true; // 注释掉父遍历字幕
+      }
+    }
+  }
+
+  console.log(newSubtitleArray);
   /*
       第三步：生成 ASS 文件
   */
@@ -114,26 +151,28 @@ PlayResY: 1080
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,ZhunYuan,64,&H00FFFFFF,&H00FFFFFF,&H002A2A2A,&HFF0E0807,0,0,0,0,100,100,1,0,1,3.1,0,2,135,135,32,1
-Style: ${style},阿里巴巴普惠体 B,64,&H00FFFFFF,&H00FFFFFF,&H00BD3B24,&HFF0E0807,0,0,0,0,100,100,1,0,1,3.1,0,8,135,135,20,1
+Style: Default,阿里巴巴普惠体 M,81,&H00FFFFFF,&H00FFFFFF,&H002A2A2A,&HFF0E0807,0,0,0,0,99,100,1,0,1,3,0,2,135,135,32,1
+Style: Top,阿里巴巴普惠体 B,64,&H00FFFFFF,&H00FFFFFF,&H000A0A0A,&HFF0E0807,0,0,0,0,100,100,1,0,1,3.1,0,8,135,135,20,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `
 
-  for (let i in newSubtitleArray1) {
-    let thisStartTime = newSubtitleArray1[i].startTime.slice(1, 11).replace(',', '.');
-    let thisEndTime = newSubtitleArray1[i].endTime.slice(1, 11).replace(',', '.');
+  for (let i in newSubtitleArray) {
+    let thisStartTime = newSubtitleArray[i].startTime.slice(1, 11).replace(',', '.');
+    let thisEndTime = newSubtitleArray[i].endTime.slice(1, 11).replace(',', '.');
     let thisAssLine =
-      `Dialogue: 0,${thisStartTime},${thisEndTime},${newSubtitleArray1[i].style},,0,0,0,,${newSubtitleArray1[i].text}`
+      `Dialogue: 0,${thisStartTime},${thisEndTime},${newSubtitleArray[i].style},,0,0,0,,${newSubtitleArray[i].text}`
+    if (newSubtitleArray[i].comment == true) { // 如果这行字幕是注释
+      thisAssLine = thisAssLine.replace('Dialogue:', 'Comment:'); // 将该行字幕改为注释
+    }
     ass = ass + thisAssLine + '\n';
   }
 
-  if (newSubtitleArray1.length == 0) {
+  if (newSubtitleArray.length == 0) {
     log('没有可以转换的字幕，请检查 SRT 内容！');
     return '';
   } else {
     return ass;
   }
-  // log(ass);
 }
