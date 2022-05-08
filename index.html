@@ -54,7 +54,7 @@
 
       <div class="mdui-row mdui-m-t-3">
 
-        <div class="mdui-textfield mdui-col-xs-6">
+        <div class="mdui-textfield mdui-col-xs-6" id="srtSource">
           <textarea class="mdui-textfield-input" rows="8" placeholder="请粘贴 SRT 字幕内容..." id="srt"></textarea>
         </div>
 
@@ -71,18 +71,20 @@
           <div class="mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme mdui-fab" id="go">
             <i class="mdui-icon material-icons">send</i>
           </div>
-          <div style="display: inline; margin-left: 10px;"></div>
           <div class="mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme mdui-fab" id="copy"
-            data-clipboard-target="#ass">
+            data-clipboard-target="#ass" style="margin-left: 10px;">
             <i class="mdui-icon material-icons">content_copy</i>
+          </div>
+          <div class="mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme mdui-fab" id="download"
+            style="margin-left: 10px;">
+            <i class="mdui-icon material-icons">cloud_download</i>
           </div>
           <br><br>
           <a class="mdui-btn mdui-btn-raised mdui-ripple" href="https://zhconvert.org/" target="__blank">打开繁化姬</a>
         </div>
         <!-- Console -->
         <div class="mdui-col-xs-8 mdui-typo">
-          <pre style="height: 150px; overflow-wrap: normal; overflow-y: scroll;"
-            id="log"></pre>
+          <pre style="height: 150px; overflow-wrap: normal; overflow-y: scroll;" id="log"></pre>
         </div>
 
       </div>
