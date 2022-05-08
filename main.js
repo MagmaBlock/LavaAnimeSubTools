@@ -47,9 +47,6 @@ document.getElementById('go').addEventListener('click', () => {
   };
 })
 
-document.getElementById('download').addEventListener('click', () => {
-  download(`Generated_${new Date().getTime()}.ass`, document.getElementById('ass').value) // 以时间戳命名
-})
 function log(log) { // 封装一个 Log 函数
   document.getElementById('log').insertAdjacentHTML('afterbegin', log + '<br>')
   console.log(log)
@@ -218,7 +215,17 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   } else return ass;
 }
 
-function download(filename, text) { // 保存 ASS 文件
+// 下载
+document.getElementById('download').addEventListener('click', () => {
+  download(`Generated_${new Date().getTime()}.ass`, document.getElementById('ass').value) // 以时间戳命名
+})
+function log(log) { // 封装一个 Log 函数
+  document.getElementById('log').insertAdjacentHTML('afterbegin', log + '<br>')
+  console.log(log)
+}
+
+// 保存 ASS 文件
+function download(filename, text) {
   var pom = document.createElement('a')
   pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text))
   pom.setAttribute('download', filename)
