@@ -7,6 +7,35 @@ const parser = new srtParser2();
 // 创建一个复制器实例
 const clipboard = new ClipboardJS('#copy');
 
+// 设置区域处理
+var customBracketStyle = document.getElementById('customBracketStyle');
+var quoteReplace = document.getElementById('quoteReplace');
+
+
+if (localStorage.getItem('config') !== null) { // 有存储设置
+  var config = JSON.parse(localStorage.getItem('config'));
+  console.log('读取设置：', config);
+  customBracketStyle.value = config.customBracketStyle;
+  quoteReplace.checked = config.quoteReplace;
+}
+else {
+  localStorage.setItem('config', JSON.stringify({
+    'quoteReplace': false,
+    'customBracketStyle': ''
+  }));
+  var config = JSON.parse(localStorage.getItem('config'));
+  console.log('新建设置：', config);
+}
+
+customBracketStyle.addEventListener('input', function () {
+  config.customBracketStyle = customBracketStyle.value;
+  localStorage.setItem('config', JSON.stringify(config));
+})
+quoteReplace.addEventListener('change', function () {
+  config.quoteReplace = quoteReplace.checked;
+  localStorage.setItem('config', JSON.stringify(config));
+})
+
 // 复制事件处理
 clipboard.on('success', function (e) {
   log('复制结果成功')
@@ -14,6 +43,30 @@ clipboard.on('success', function (e) {
 clipboard.on('error', function (e) {
   log('复制结果失败')
 })
+
+// 下载按钮事件处理
+document.getElementById('download').addEventListener('click', () => {
+  let ass = document.getElementById('ass').value;
+  if (ass !== '') {
+    download(`Generated_${new Date().getTime()}.ass`, ass); // 以时间戳命名
+  }
+  else {
+    log('尚未生成 ASS 内容!', true)
+  }
+})
+
+// 保存 ASS 文件
+function download(filename, text) {
+  var pom = document.createElement('a')
+  pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text))
+  pom.setAttribute('download', filename)
+  var event = new MouseEvent("click", {
+    bubbles: true,
+    cancelable: true,
+    view: window
+  })
+  pom.dispatchEvent(event)
+}
 
 // 拖入文件
 var srtInput = document.getElementById('srt')
@@ -35,21 +88,22 @@ srtInput.ondrop = function (e) {
 // 点击转换按钮时的事件处理
 document.getElementById('go').addEventListener('click', () => {
   let srt = document.getElementById('srt').value;
-  let style = document.getElementById('style').value !== '' ? document.getElementById('style').value : 'Top';
+  let style = config.customBracketStyle !== '' ? config.customBracketStyle : 'Top';
   if (srt !== '') {
     let ass = srtToAss(srt, style); // 按照设置处理 SRT
     document.getElementById('ass').value = ass; // 输出 ASS
   } else {
-    log('请填入 SRT 字幕正文')
-    mdui.snackbar({
-      message: '请填入 SRT 字幕正文'
-    })
+    log('请填入 SRT 字幕正文', true)
   };
 })
 
-function log(log) { // 封装一个 Log 函数
+// 封装一个 Log 函数
+function log(log, snackbar = false) {
   document.getElementById('log').insertAdjacentHTML('afterbegin', log + '<br>')
   console.log(log)
+  if (snackbar) mdui.snackbar({
+    message: log
+  });
 }
 
 function srtToAss(srt, style) { // SRT 转 ASS 的函数
@@ -105,7 +159,7 @@ function srtToAss(srt, style) { // SRT 转 ASS 的函数
         2.
         分割单行多重对话：如果需要，将字幕中出现的单行多对话拆开，每个对话一个字幕。
         (如：“-那个打扮成孔明的人没在啊 -请为双方献上掌声” ==> “那个打扮成孔明的人没在啊” “请为双方献上掌声”，变为两个字幕)
-
+ 
   */
 
   for (let i in newSubtitleArray) {
@@ -167,6 +221,19 @@ function srtToAss(srt, style) { // SRT 转 ASS 的函数
     }
   }
 
+  /*
+      如果开启了引号替换，则执行此函数替换引号
+  */
+  if (quoteReplace.checked) quoteReplaceFunction();
+  function quoteReplaceFunction() {
+    for (let i in newSubtitleArray) {
+      if (newSubtitleArray[i].text.match(/\“|\”/)) {
+        log(`[变成方括号][${i}] ${newSubtitleArray[i].text}`);
+        newSubtitleArray[i].text = newSubtitleArray[i].text.replace(/“/g, '「').replace(/”/g, '」');
+      }
+    }
+  }
+
   console.log('下方是最终的字幕数组：');
   console.log(newSubtitleArray);
 
@@ -207,10 +274,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   }
 
   if (newSubtitleArray.length == 0) {
-    log('没有可以转换的字幕，请检查 SRT 内容！');
-    mdui.snackbar({
-      message: '没有可以转换的字幕，请检查 SRT 内容！'
-    })
+    log('没有可以转换的字幕，请检查 SRT 内容！', true);
     return '';
   } else return ass;
 }
