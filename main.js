@@ -1,6 +1,6 @@
 // 依赖包
 import srtParser2 from 'srt-parser-2'
-import ClipboardJS from 'clipboard';
+import ClipboardJS from 'clipboard'
 
 // 新建一个解析器
 const parser = new srtParser2();
@@ -9,11 +9,28 @@ const clipboard = new ClipboardJS('#copy');
 
 // 复制事件处理
 clipboard.on('success', function (e) {
-  log('复制成功')
-});
+  log('复制结果成功')
+})
 clipboard.on('error', function (e) {
-  log('复制失败')
-});
+  log('复制结果失败')
+})
+
+// 拖入文件
+var srtInput = document.getElementById('srt')
+document.ondrop = function (e) { e.preventDefault() } // 取消浏览器默认事件
+document.ondragover = function (e) { e.preventDefault() } // 取消浏览器默认事件
+srtInput.ondragenter = function () {
+  document.getElementById('srtSource').classList.add("mdui-textfield-focus")
+}
+srtInput.ondragleave = function () {
+  document.getElementById('srtSource').classList.remove("mdui-textfield-focus")
+}
+srtInput.ondrop = function (e) {
+  var fr = new FileReader()
+  fr.readAsText(e.dataTransfer.files[0])
+  fr.onload = function () { srtInput.value = fr.result }
+}
+
 
 // 点击转换按钮时的事件处理
 document.getElementById('go').addEventListener('click', () => {
