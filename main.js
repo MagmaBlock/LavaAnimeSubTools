@@ -99,8 +99,7 @@ document.getElementById('go').addEventListener('click', () => {
 // 封装一个 Log 函数
 function log(log, snackbar = false) {
   let logBox = document.getElementById("log")
-  logBox.scrollTop = logBox.scrollHeight
-  logBox.insertAdjacentHTML('beforeend', log + '<br>')
+  logBox.insertAdjacentHTML('afterbegin', log + '<br>')
   console.log(log)
   if (snackbar) mdui.snackbar({
     message: log
