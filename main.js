@@ -20,10 +20,10 @@ var srtInput = document.getElementById('srt')
 document.ondrop = function (e) { e.preventDefault() } // 取消浏览器默认事件
 document.ondragover = function (e) { e.preventDefault() } // 取消浏览器默认事件
 srtInput.ondragenter = function () {
-  document.getElementById('srtSource').classList.add("mdui-textfield-focus")
+  document.getElementById('srt-element-father').classList.add("mdui-textfield-focus")
 }
 srtInput.ondragleave = function () {
-  document.getElementById('srtSource').classList.remove("mdui-textfield-focus")
+  document.getElementById('srt-element-father').classList.remove("mdui-textfield-focus")
 }
 srtInput.ondrop = function (e) {
   var fr = new FileReader()
