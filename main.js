@@ -84,7 +84,6 @@ srtInput.ondrop = function (e) {
   fr.onload = function () { srtInput.value = fr.result }
 }
 
-
 // 点击转换按钮时的事件处理
 document.getElementById('go').addEventListener('click', () => {
   let srt = document.getElementById('srt').value;
@@ -99,7 +98,9 @@ document.getElementById('go').addEventListener('click', () => {
 
 // 封装一个 Log 函数
 function log(log, snackbar = false) {
-  document.getElementById('log').insertAdjacentHTML('afterbegin', log + '<br>')
+  let logBox = document.getElementById("log")
+  logBox.scrollTop = logBox.scrollHeight
+  logBox.insertAdjacentHTML('beforeend', log + '<br>')
   console.log(log)
   if (snackbar) mdui.snackbar({
     message: log
