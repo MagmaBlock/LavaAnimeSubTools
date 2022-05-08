@@ -54,6 +54,7 @@ function srtToAss(srt, style) { // SRT 转 ASS 的函数
       for (let j in lines) { // 循环拆开后的每一行
         if (lines[j].startsWith('-')) {
           log(`[拆分多行][${i}][${j}] ${lines[j]} 的开头是 -，移除...`)
+          lines[j] = lines[j].replace(/^-/, '')
         }
         let newSubtitle = {
           startTime: parsedSrt[i].startTime, // 引用原来的时间
