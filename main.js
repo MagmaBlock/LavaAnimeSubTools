@@ -7,34 +7,36 @@ const parser = new srtParser2();
 // 创建一个复制器实例
 const clipboard = new ClipboardJS('#copy');
 
-// 设置区域处理
+// 各个设置元素
 var customBracketStyle = document.getElementById('customBracketStyle');
 var quoteReplace = document.getElementById('quoteReplace');
+var aegisub = document.getElementById('aegisub');
+var bracketStyle = document.getElementById('bracketStyle');
+var spaceReplace = document.getElementById('spaceReplace');
 
+// 从本地存储读取设置
+localStorage.removeItem('config');
+customBracketStyle.value = localStorage.getItem('customBracketStyle') !== null ? localStorage.getItem('customBracketStyle') : '';
+quoteReplace.checked = localStorage.getItem('quoteReplace') !== null ? localStorage.getItem('quoteReplace') : false;
+aegisub.checked = localStorage.getItem('aegisub') !== null ? localStorage.getItem('aegisub') : false;
+bracketStyle.checked = localStorage.getItem('bracketStyle') !== null ? localStorage.getItem('bracketStyle') : true;
+spaceReplace.checked = localStorage.getItem('spaceReplace') !== null ? localStorage.getItem('spaceReplace') : false;
+saveConfig();
+console.log('读取设置：', localStorage);
 
-if (localStorage.getItem('config') !== null) { // 有存储设置
-  var config = JSON.parse(localStorage.getItem('config'));
-  console.log('读取设置：', config);
-  customBracketStyle.value = config.customBracketStyle;
-  quoteReplace.checked = config.quoteReplace;
+function saveConfig() {
+  localStorage.setItem('customBracketStyle', customBracketStyle.value);
+  localStorage.setItem('quoteReplace', quoteReplace.checked);
+  localStorage.setItem('aegisub', aegisub.checked);
+  localStorage.setItem('bracketStyle', bracketStyle.checked);
+  localStorage.setItem('spaceReplace', spaceReplace.checked);
 }
-else {
-  localStorage.setItem('config', JSON.stringify({
-    'quoteReplace': false,
-    'customBracketStyle': ''
-  }));
-  var config = JSON.parse(localStorage.getItem('config'));
-  console.log('新建设置：', config);
-}
 
-customBracketStyle.addEventListener('input', function () {
-  config.customBracketStyle = customBracketStyle.value;
-  localStorage.setItem('config', JSON.stringify(config));
-})
-quoteReplace.addEventListener('change', function () {
-  config.quoteReplace = quoteReplace.checked;
-  localStorage.setItem('config', JSON.stringify(config));
-})
+// 保存设置
+customBracketStyle.addEventListener('input', saveConfig)
+let checkBoxList = [quoteReplace, aegisub, bracketStyle, spaceReplace];
+checkBoxList.forEach(item => { item.addEventListener('change', saveConfig) })
+
 
 // 复制事件处理
 clipboard.on('success', function (e) {
@@ -57,6 +59,9 @@ document.getElementById('download').addEventListener('click', () => {
 
 // 保存 ASS 文件
 function download(filename, text) {
+  if (localStorage.getItem('aegisub')) {
+    mdui.alert(`虽然但是，这样下载的文件不能用喔... <br>您已打开 【仅生成可粘贴至 Aegisub 的内容】`);
+  }
   var pom = document.createElement('a')
   pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text))
   pom.setAttribute('download', filename)
@@ -87,7 +92,7 @@ srtInput.ondrop = function (e) {
 // 点击转换按钮时的事件处理
 document.getElementById('go').addEventListener('click', () => {
   let srt = document.getElementById('srt').value;
-  let style = config.customBracketStyle !== '' ? config.customBracketStyle : 'Top';
+  let style = localStorage.getItem('customBracketStyle') !== '' ? localStorage.getItem('customBracketStyle') : 'Top';
   if (srt !== '') {
     let ass = srtToAss(srt, style); // 按照设置处理 SRT
     document.getElementById('ass').value = ass; // 输出 ASS
@@ -96,10 +101,11 @@ document.getElementById('go').addEventListener('click', () => {
   };
 })
 
+
 // 封装一个 Log 函数
 function log(log, snackbar = false) {
   let logBox = document.getElementById("log")
-  logBox.insertAdjacentHTML('afterbegin', log + '<br>')
+  logBox.insertAdjacentHTML('beforeend', log + '<br>')
   console.log(log)
   if (snackbar) mdui.snackbar({
     message: log
@@ -127,7 +133,33 @@ function srtToAss(srt, style) { // SRT 转 ASS 的函数
       let lines = parsedSrt[i].text.split("\n"); // 拆分srt字幕
       log(`[拆分多行][${i}] ${JSON.stringify(lines)}`)
 
-      for (let j in lines) { // 循环拆开后的每一行
+      for (let j = 0; j < lines.length; j++) { // 循环拆开后的每一行
+        if (
+          lines[j].match(/\(|（/g) && // 如果这一行包含左括号
+          lines[j].match(/\)|）/g) == null && // 但不包含右括号
+          lines[j + 1].match(/\(|（/g) == null && // 下行不包含左括号
+          lines[j + 1].match(/\)|）/g) // 但是包含右括号
+        ) {
+          let newSubtitle = { // 对跨行括号进行操作之前，先把原始的内容作为注释插入数组
+            startTime: parsedSrt[i].startTime, // 引用原来的时间
+            endTime: parsedSrt[i].endTime,
+            text: lines[j], // 被分割的这一行
+            style: 'Default',
+            comment: true // 注释
+          };
+          let newSubtitle2 = {
+            startTime: parsedSrt[i].startTime,
+            endTime: parsedSrt[i].endTime,
+            text: lines[j + 1], // 被分割的这一行的下一行
+            style: 'Default',
+            comment: true
+          };
+          newSubtitleArray.push(newSubtitle, newSubtitle2); // 插入数组
+
+          log(`[合并跨行括号][${i}] ${JSON.stringify([lines[j], lines[j + 1]])}`);
+          lines[j] = lines[j] + lines[j + 1]; // 将下一行的内容拼接到这一行
+          lines.splice(j + 1, 1); // 删除下一行
+        }
         let newSubtitle = {
           startTime: parsedSrt[i].startTime, // 引用原来的时间
           endTime: parsedSrt[i].endTime,
@@ -200,8 +232,10 @@ function srtToAss(srt, style) { // SRT 转 ASS 的函数
 
   for (let i in newSubtitleArray) { // 父遍历
     for (let j = 0; j < newSubtitleArray.length; j++) { // 子遍历，同上，涉及到对循环变量数字操作的 for 都只能这样用。
-      if (newSubtitleArray[j].startTime == newSubtitleArray[i].endTime && newSubtitleArray[j].text == newSubtitleArray[i].text) { // 如果子遍历字幕的开始时间和当前父遍历字幕的结束时间相同，且他们的内容一样，则将他们合并
-        log(`[合并分裂行][${i} ==> ${j}](${newSubtitleArray[i].endTime} => ${newSubtitleArray[j].endTime}) ${newSubtitleArray[j].text}`);
+      // 如果子遍历字幕的开始时间和当前父遍历字幕的结束时间相同，且他们的内容一样，则将他们合并
+      if (newSubtitleArray[j].startTime == newSubtitleArray[i].endTime && newSubtitleArray[j].text == newSubtitleArray[i].text) {
+        if (!newSubtitleArray[i].comment) // 仅输出不是注释行的合并日志
+          log(`[合并分裂行][${i} ==> ${j}](${newSubtitleArray[i].endTime} => ${newSubtitleArray[j].endTime}) ${newSubtitleArray[j].text}`);
         newSubtitleArray[i].endTime = newSubtitleArray[j].endTime; // 将子遍历字幕的结束时间赋值给父遍历字幕
         newSubtitleArray.splice(j, 1); // 删除子遍历字幕
         j = j - 1; // 子遍历字幕的索引减一
@@ -213,22 +247,33 @@ function srtToAss(srt, style) { // SRT 转 ASS 的函数
       为括号行指定样式
   */
 
-  for (let i in newSubtitleArray) {
-    let thisLineTest = newSubtitleArray[i].text;
-    if (thisLineTest.startsWith('(') && thisLineTest.endsWith(')') || thisLineTest.startsWith('（') && thisLineTest.endsWith('）')) {
-      log(`[括号行样式][行 ${i}] ${thisLineTest} 更换为 ${style} 样式`);
-      newSubtitleArray[i].style = style;
+  if (localStorage.getItem('bracketStyle') == 'true') {
+    for (let i in newSubtitleArray) {
+      let thisLineTest = newSubtitleArray[i].text;
+      if (thisLineTest.startsWith('(') && thisLineTest.endsWith(')') || thisLineTest.startsWith('（') && thisLineTest.endsWith('）')) {
+        log(`[括号行样式][行 ${i}] ${thisLineTest} 更换为 ${style} 样式`);
+        newSubtitleArray[i].style = style;
+      }
+    }
+  }
+
+  /*
+      替换全角空格
+  */
+  if (localStorage.getItem('spaceReplace') == 'true') {
+    for (let i in newSubtitleArray) {
+      newSubtitleArray[i].text = newSubtitleArray[i].text.replace(/ /g, '　');
     }
   }
 
   /*
       如果开启了引号替换，则执行此函数替换引号
   */
-  if (quoteReplace.checked) quoteReplaceFunction();
-  function quoteReplaceFunction() {
+  if (localStorage.getItem('quoteReplace') == 'true') {
     for (let i in newSubtitleArray) {
       if (newSubtitleArray[i].text.match(/\“|\”/)) {
-        log(`[变成方括号][${i}] ${newSubtitleArray[i].text}`);
+        if (!newSubtitleArray[i].comment) // 仅输出不是注释行的合并日志
+          log(`[变成方括号][${i}] ${newSubtitleArray[i].text}`);
         newSubtitleArray[i].text = newSubtitleArray[i].text.replace(/“/g, '「').replace(/”/g, '」');
       }
     }
@@ -263,6 +308,9 @@ Style: Top,阿里巴巴普惠体 B,64,&H00FFFFFF,&H00FFFFFF,&H000A0A0A,&HFF0E080
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `
+  if (localStorage.getItem('aegisub') == 'true') {
+    ass = '';
+  }
 
   for (let i in newSubtitleArray) {
     let thisStartTime = newSubtitleArray[i].startTime.slice(1, 11).replace(',', '.'); // 把 SRT 的时间转为 ASS 时间

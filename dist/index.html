@@ -10,7 +10,7 @@
   <script src="https://cdn.bootcdn.net/ajax/libs/mdui/1.0.2/js/mdui.min.js"></script>
   <link href="https://cdn.bootcdn.net/ajax/libs/mdui/1.0.2/css/mdui.min.css" rel="stylesheet">
   
-  <script type="module" crossorigin src="/assets/index.9cd04e8a.js"></script>
+  <script type="module" crossorigin src="/assets/index.58b7e8d8.js"></script>
 </head>
 
 <body class="mdui-theme-layout-auto mdui-theme-primary-indigo mdui-theme-accent-indigo">
@@ -30,7 +30,7 @@
         <!-- 第一行设置 -->
         <div class="mdui-col-xs-5">
           <label class="mdui-checkbox">
-            <input type="checkbox" checked disabled /><i class="mdui-checkbox-icon"></i> 为括号包裹行指定样式名 <small
+            <input type="checkbox" id="bracketStyle" checked /><i class="mdui-checkbox-icon"></i> 为括号包裹行指定样式名 <small
               class="mdui-text-color-theme-secondary">不填默认设置为 Top</small>
           </label>
         </div>
@@ -38,10 +38,22 @@
           <input class="mdui-textfield-input" type="text" placeholder="ASS Style 名称..." id="customBracketStyle" />
         </div>
         <!-- 第二行设置 -->
-        <div class="mdui-col-xs-12">
+        <div class="mdui-col-xs-4">
           <label class="mdui-checkbox mdui-typo">
             <input type="checkbox" id="quoteReplace" /><i class="mdui-checkbox-icon"></i>
-            将双引号 <code>“ ”</code> 替换为方引号 <code>「」</code>
+            将简中引号 <code>“ ”</code> 替换为方引号 <code>「」</code>
+          </label>
+        </div>
+        <div class="mdui-col-xs-4">
+          <label class="mdui-checkbox mdui-typo">
+            <input type="checkbox" id="spaceReplace" /><i class="mdui-checkbox-icon"></i>
+            将半角空格替换为全角空格
+          </label>
+        </div>
+        <div class="mdui-col-xs-4">
+          <label class="mdui-checkbox mdui-typo">
+            <input type="checkbox" id="aegisub" /><i class="mdui-checkbox-icon"></i>
+            仅生成可粘贴至 Aegisub 的内容
           </label>
         </div>
       </div>
@@ -55,11 +67,13 @@
       <div class="mdui-row mdui-m-t-3">
 
         <div class="mdui-textfield mdui-col-xs-4" id="srt-element-father">
-          <textarea class="mdui-textfield-input" style="font-size: smaller;" rows="8" placeholder="请粘贴 SRT 字幕内容..." id="srt"></textarea>
+          <textarea class="mdui-textfield-input" style="font-size: smaller;" rows="8" placeholder="请粘贴 SRT 字幕内容..."
+            id="srt"></textarea>
         </div>
 
         <div class="mdui-textfield mdui-col-xs-8">
-          <textarea class="mdui-textfield-input" style="font-size: smaller;" rows="8" placeholder="这里将显示生成的 ASS 字幕内容..." id="ass"></textarea>
+          <textarea class="mdui-textfield-input" style="font-size: smaller;" rows="8" placeholder="这里将显示生成的 ASS 字幕内容..."
+            id="ass"></textarea>
         </div>
 
       </div>
