@@ -17,10 +17,10 @@ var spaceReplace = document.getElementById('spaceReplace');
 // 从本地存储读取设置
 localStorage.removeItem('config');
 customBracketStyle.value = localStorage.getItem('customBracketStyle') !== null ? localStorage.getItem('customBracketStyle') : '';
-quoteReplace.checked = localStorage.getItem('quoteReplace') !== null ? localStorage.getItem('quoteReplace') : false;
-aegisub.checked = localStorage.getItem('aegisub') !== null ? localStorage.getItem('aegisub') : false;
-bracketStyle.checked = localStorage.getItem('bracketStyle') !== null ? localStorage.getItem('bracketStyle') : true;
-spaceReplace.checked = localStorage.getItem('spaceReplace') !== null ? localStorage.getItem('spaceReplace') : false;
+quoteReplace.checked = localStorage.getItem('quoteReplace') !== null ? JSON.parse(localStorage.getItem('quoteReplace')) : false;
+aegisub.checked = localStorage.getItem('aegisub') !== null ? JSON.parse(localStorage.getItem('aegisub')) : false;
+bracketStyle.checked = localStorage.getItem('bracketStyle') !== null ? JSON.parse(localStorage.getItem('bracketStyle')) : true;
+spaceReplace.checked = localStorage.getItem('spaceReplace') !== null ? JSON.parse(localStorage.getItem('spaceReplace')) : false;
 saveConfig();
 console.log('读取设置：', localStorage);
 
