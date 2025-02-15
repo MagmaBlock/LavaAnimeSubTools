@@ -171,8 +171,12 @@ function srtToAss(srt, style) {
       for (let j = 0; j < lines.length - 1; j++) {
         // 检查当前行和下一行是否包含中文标点符号
         const chinesePunctuation = /[，。！？；：、（）《》【】“”‘’]/;
-        const currentLineEndsWithPunctuation = chinesePunctuation.test(lines[j].slice(-1));
-        const nextLineStartsWithPunctuation = chinesePunctuation.test(lines[j + 1].charAt(0));
+        const currentLineEndsWithPunctuation = chinesePunctuation.test(
+          lines[j].slice(-1)
+        );
+        const nextLineStartsWithPunctuation = chinesePunctuation.test(
+          lines[j + 1].charAt(0)
+        );
 
         if (
           lines[j].match(/[\u4e00-\u9fff]/) && // 当前行包含汉字
@@ -391,7 +395,7 @@ Style: Top,更纱黑体 SC Semibold,58,&H00FFFFFF,&H00FFFFFF,&H000A0A0A,&HFF0E08
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
-  if (localStorage.getItem("aegisub") == "true") {
+  if (JSON.parse(localStorage.getItem("aegisub"))) {
     ass = "";
   }
 
