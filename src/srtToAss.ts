@@ -26,6 +26,11 @@ interface SRTToAssOptions {
 const parser = new Parser();
 
 export function srtToAss(srt: string, options: SRTToAssOptions = {}): string {
+  // 验证空输入
+  if (!srt || srt.trim().length === 0) {
+    throw new Error('Invalid SRT format: Empty input');
+  }
+
   const {
     bracketLineStyle = "Top",
     replaceQuotes = false,
@@ -45,7 +50,14 @@ export function srtToAss(srt: string, options: SRTToAssOptions = {}): string {
     }
   };
 
-  const parsedSrt: SRTItem[] = parser.fromSrt(srt);
+  // 解析SRT文件
+  let parsedSrt: SRTItem[];
+  try {
+    parsedSrt = parser.fromSrt(srt);
+  } catch (error) {
+    throw new Error('Invalid SRT format');
+  }
+
   log(`[解析SRT文件][0] 成功，共${parsedSrt.length}条字幕`);
   const newSubtitleArray: ASSItem[] = [];
 
