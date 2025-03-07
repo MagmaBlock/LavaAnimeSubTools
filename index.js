@@ -1,0 +1,1 @@
+export { srtToAss } from './src/srtToAss.js';
