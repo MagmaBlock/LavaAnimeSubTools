@@ -11,7 +11,126 @@
       href="https://cdn.bootcdn.net/ajax/libs/mdui/1.0.2/css/mdui.min.css"
       rel="stylesheet"
     />
-    <script type="module" src="/main.js"></script>
+    <script type="module">
+      import { srtToAss } from "./src/srtToAss.ts";
+      import ClipboardJS from "clipboard";
+
+      // 初始化 Clipboard
+      const clipboard = new ClipboardJS("#copy");
+
+      // 从本地存储读取设置
+      const customBracketStyle = document.getElementById("customBracketStyle");
+      const quoteReplace = document.getElementById("quoteReplace");
+      const aegisub = document.getElementById("aegisub");
+      const bracketStyle = document.getElementById("bracketStyle");
+      const spaceReplace = document.getElementById("spaceReplace");
+
+      // 初始化设置
+      localStorage.removeItem("config");
+      customBracketStyle.value =
+        localStorage.getItem("customBracketStyle") || "";
+      quoteReplace.checked = JSON.parse(
+        localStorage.getItem("quoteReplace") || "false"
+      );
+      const aegisubValue = localStorage.getItem("aegisub");
+      aegisub.checked = aegisubValue !== null ? JSON.parse(aegisubValue) : false;
+      bracketStyle.checked = JSON.parse(
+        localStorage.getItem("bracketStyle") || "true"
+      );
+      spaceReplace.checked = JSON.parse(
+        localStorage.getItem("spaceReplace") || "false"
+      );
+
+      // 保存设置
+      function saveConfig() {
+        localStorage.setItem("customBracketStyle", customBracketStyle.value);
+        localStorage.setItem("quoteReplace", quoteReplace.checked);
+        localStorage.setItem("aegisub", aegisub.checked);
+        localStorage.setItem("bracketStyle", bracketStyle.checked);
+        localStorage.setItem("spaceReplace", spaceReplace.checked);
+      }
+
+      // 绑定事件
+      customBracketStyle.addEventListener("input", saveConfig);
+      [quoteReplace, aegisub, bracketStyle, spaceReplace].forEach((item) => {
+        item.addEventListener("change", saveConfig);
+      });
+
+      // 转换按钮事件
+      document.getElementById("go").addEventListener("click", () => {
+        const srt = document.getElementById("srt").value;
+        const style = localStorage.getItem("customBracketStyle") || "Top";
+
+        if (srt) {
+          const ass = srtToAss(srt, {
+            bracketLineStyle: style,
+            replaceQuotes: quoteReplace.checked,
+            replaceSpaces: spaceReplace.checked,
+            outputDialogueOnly: aegisub.checked,
+            logger: (message) => log(message, false)
+          });
+          document.getElementById("ass").value = ass;
+        } else {
+          log("请填入 SRT 字幕正文", true);
+        }
+      });
+
+      // 下载按钮事件
+      document.getElementById("download").addEventListener("click", () => {
+        const ass = document.getElementById("ass").value;
+        if (ass) {
+          download(`Generated_${new Date().getTime()}.ass`, ass);
+        } else {
+          log("尚未生成 ASS 内容!", true);
+        }
+      });
+
+      // 下载功能
+      function download(filename, text) {
+        if (JSON.parse(localStorage.getItem("aegisub") || "false")) {
+          mdui.alert(
+            "虽然但是，这样下载的文件不能用喔... <br>您已打开 【仅生成可粘贴至 Aegisub 的内容】"
+          );
+        }
+        const element = document.createElement("a");
+        element.setAttribute(
+          "href",
+          "data:text/plain;charset=utf-8," + encodeURIComponent(text)
+        );
+        element.setAttribute("download", filename);
+        element.style.display = "none";
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+      }
+
+      // 日志功能
+      function log(message, snackbar = false) {
+        const logBox = document.getElementById("log");
+        logBox.insertAdjacentHTML("beforeend", `${message}<br>`);
+        if (snackbar) {
+          mdui.snackbar({ message });
+        }
+      }
+
+      // 拖拽文件处理
+      const srtInput = document.getElementById("srt");
+      document.ondragover = document.ondrop = (e) => e.preventDefault();
+      srtInput.ondragenter = () =>
+        document
+          .getElementById("srt-element-father")
+          .classList.add("mdui-textfield-focus");
+      srtInput.ondragleave = () =>
+        document
+          .getElementById("srt-element-father")
+          .classList.remove("mdui-textfield-focus");
+      srtInput.ondrop = (e) => {
+        const file = e.dataTransfer.files[0];
+        const reader = new FileReader();
+        reader.onload = () => (srtInput.value = reader.result);
+        reader.readAsText(file);
+      };
+    </script>
   </head>
 
   <body
